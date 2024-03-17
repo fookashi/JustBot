@@ -1,0 +1,6 @@
+__pycache__/
+*.py[cod]
+*.session
+*.jpg
+settings.py
+.env
