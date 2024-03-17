@@ -38,7 +38,7 @@ class FunnyCogs(commands.Cog):
     @commands.command()
     async def demo(self, ctx, *args):
         if not len(args):
-            text = "do_random"
+            text = None
         else:
             text = " ".join(args)
         if not hasattr(ctx, 'message') or not ctx.message.attachments:
@@ -57,16 +57,22 @@ class FunnyCogs(commands.Cog):
     @commands.Cog.listener()
     async def on_message(self, message: Message):
         if message.author == self.bot.user:
-            print('Автор сообщения: JustBot')
-            return
-        if not (hasattr(message, 'attachments') and len(message.attachments) == 1 and not message.content.startswith(('!', '/'))):
-            print('Сообщение является командой или не содержит картинок')
-            return
+            return print('Автор сообщения: JustBot')
+
+        if not (hasattr(message, 'attachments')
+                and len(message.attachments) == 1
+                and not message.content.startswith(('!', '/'))):
+            return print('Сообщение является командой или не содержит картинок')
+
         attachment = message.attachments[0]
+
         try:
-            image = ImageToDemotivator(name=attachment.filename, content_type=attachment.content_type, image=await attachment.read())
-            demotivator = await self.demo_creator.create_demotivator(text="do_random", image=image)
+            image = ImageToDemotivator(name=attachment.filename,
+                                       content_type=attachment.content_type,
+                                       image=await attachment.read())
+            demotivator = await self.demo_creator.create_demotivator(image=image)
+
         except Exception as e:
-            print(e)
-            return
+            return print(e)
+
         return await message.reply(file=File(demotivator.image, filename=demotivator.name))

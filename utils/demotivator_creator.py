@@ -6,6 +6,7 @@ import aiohttp
 
 from models.images import DemotivatorImage, ImageToDemotivator
 
+
 DEMO_TEXTS = (
     'Петербургский феномен', 'все просто',
     'Кушетка Андрея Бахметьева', 'Тут даже я/ахуел',
@@ -27,15 +28,21 @@ class DemotivatorCreator:
     def __init__(self):
         self.url = "https://ademotivatory.ru/create/rezult.php"
 
-    async def create_demotivator(self, text: str, image: ImageToDemotivator) -> DemotivatorImage | None:
+    async def create_demotivator(
+        self,
+        image: ImageToDemotivator,
+        text: str = None
+    ) -> DemotivatorImage | None:
         form_data = aiohttp.FormData()
-        if text == "do_random":
+
+        if text is None:
             text = random.choice(DEMO_TEXTS)
         try:
             text1, text2 = text.split('/')
         except ValueError:
             text1 = text
             text2 = ''
+
         form_data.add_field('photo', image.image, filename=image.name, content_type=image.content_type)
         form_data.add_field('text1', text1, content_type='text/plain; charset="cp1251"')
         form_data.add_field('text2', text2, content_type='text/plain; charset="cp1251"')
