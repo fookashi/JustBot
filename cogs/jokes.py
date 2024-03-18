@@ -76,3 +76,11 @@ class FunnyCogs(commands.Cog):
             return print(e)
 
         return await message.reply(file=File(demotivator.image, filename=demotivator.name))
+
+    @commands.command()
+    async def frog(self, ctx):
+        frog_data = await self.jokes_scraper.get_frog()
+        if frog_data.image is None:
+            return await ctx.send(frog_data.text)
+        else:
+            await ctx.send(frog_data.text, file=File(frog_data.image, filename='frog.jpg'))

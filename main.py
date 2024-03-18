@@ -7,7 +7,7 @@ from bot import JustBot
 env_vars = get_settings().get_secrets()
 TOKEN = env_vars.get('bot_token')
 
-bot = JustBot(command_prefix="!", help_command=None, intents=disnake.Intents.all(), test_guilds=[1218192939486941235,])
+bot = JustBot(command_prefix="!", help_command=None, intents=disnake.Intents.all())
 bot.add_cog(FunnyCogs(bot))
 
 
