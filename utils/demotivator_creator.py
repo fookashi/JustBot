@@ -1,7 +1,6 @@
 import re
 from io import BytesIO
-import random
-
+from secrets import choice
 import aiohttp
 
 from models.images import DemotivatorImage, ImageToDemotivator
@@ -17,10 +16,12 @@ DEMO_TEXTS = (
     'Самсунг гэлэкси джей один мини/ебал коня',
     'мужик ты чего...', 'ядрена/копоть', 'Ъ/ъ',
     'Добрый чел/позитивный', 'хуйня',
-    'окей гугл/fuck your mother in her houl',
     'Почему когда дрочишь/не играет песня играй рука балдей писюн?',
     'как скачать?', 'Ладно./текст', 'Мыний гесли/Демотец окрасской рутии',
-    'How?/Текст', 'Я клитор/Запомнили?'
+    'How?/Текст', 'Я клитор/Запомнили?', 'Подумай о будущем/купи сигарет на завтра',
+    'в мои времена поп ит/выглядел так', 'квадратное уравнение/через дискриминант',
+    'ДИДЖЕЙ ТЕЙП/АБУ БЭ БУБЭ БУБЭЭЭ', 'Признайся/захотел', 'Кто-нибудь знает/как избавиться от этой хуйни',
+    'в поисках папы', 'Ебать его хуй/это же огузок шелбии', 'Ну американцы/и тут преуспели'
 )
 
 
@@ -36,7 +37,7 @@ class DemotivatorCreator:
         form_data = aiohttp.FormData()
 
         if text is None:
-            text = random.choice(DEMO_TEXTS)
+            text = choice(DEMO_TEXTS)
         try:
             text1, text2 = text.split('/')
         except ValueError:
