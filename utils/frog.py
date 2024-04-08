@@ -218,7 +218,7 @@ NOT_WEDNSDAYs_LINKS = [
     'https://i.imgur.com/rLtHyGx.jpg',
 ]
 FROG_LINKS = {k: v for k, v in FROG_LINKS.items() if v.extend(ANY) is None}
-FROG_LINKS = {k: v for k, v in FROG_LINKS.items() if k != 2 and v.extend(NOT_WEDNSDAYs_LINKS) is None}
+FROG_LINKS = {k: v for k, v in FROG_LINKS.items() if (k != 2 and v.extend(NOT_WEDNSDAYs_LINKS) is None) or k == 2}
 
 
 class FrogTextConstructor:
@@ -236,9 +236,9 @@ class FrogTextConstructor:
                                   'Ладно, это просто обычный день недели, КОТОРЫЙ ПИЗЖЕ В СТО РАЗ ЛЮБОГО ДРУГОГО ДНЯ',
                                   'Помолимся же жабьему богу за этот чудесный день', 'Какой же это кааааайф')
 
-    def create_text(self, weekday: int):
-        weekday = weekday_to_string(weekday)
-        if weekday != 2:
+    def create_text(self, weekday_num: int):
+        weekday = weekday_to_string(weekday_num)
+        if weekday_num != 2:
             weekday_text = random.choices((weekday, random.choice(self.NOT_WEDNSDAYS_DAY)), (0.4, 0.6), k=1)[0]
             weekday_ending = random.choices(('', random.choice(self.NOT_WEDNSDAYS_ENDINGS)), (0.4, 0.6), k=1)[0]
         else:

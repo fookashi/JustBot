@@ -62,8 +62,8 @@ class DemotivatorCreator:
                 text = await resp.text()
                 try:
                     link = next(re.finditer(r'http://ademotivatory\.ru/create/dem\S*', text)).group()[:-1]
-                except Exception:
-                    return print('Не получилось обработать изображение:(')
+                except Exception as e:
+                    return print(e)
 
             async with session.get(link) as resp:
                 if resp.status != 200:

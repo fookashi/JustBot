@@ -1,0 +1,1 @@
+CREATE TABLE IF NOT EXISTS guild_info (guild_id INTEGER PRIMARY KEY, music_channel_id INTEGER, spam_channel_id INTEGER, auto_demo BOOLEAN DEFAULT TRUE);

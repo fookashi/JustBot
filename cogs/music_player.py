@@ -1,6 +1,13 @@
+import asyncio
+from collections import deque, defaultdict
+
 import disnake
 from disnake.ext import commands
-import yt_dlp as youtube_dl
+import yt_dlp
+
+from bot import JustBot
+from db.tables import GuildInfoTable, GuildInfo
+
 
 FFMPEG_OPTIONS = {'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5', 'options': '-vn'}
 YDL_OPTIONS = {
@@ -14,82 +21,86 @@ YDL_OPTIONS = {
 
 
 class MusicPlayer(commands.Cog):
-    def __init__(self, bot):
+    
+    def __init__(self, bot: JustBot):
         self.bot = bot
-        self.voice = None
-        self.is_playing = False
-        self.queue = []
+        self.queues = defaultdict(lambda: {'voice': None, 'queue': deque()})
+        self.ytdl = yt_dlp.YoutubeDL(YDL_OPTIONS)
 
-    async def join_voice_channel(self, ctx):
-        if ctx.author.voice is None or ctx.author.voice.channel is None:
+    async def join_voice_channel(self, ctx: commands.Context):
+        if ctx.author.voice is None:
             await ctx.send("Вы должны быть в голосовом канале, чтобы использовать эту команду.")
             return False
-
-        self.voice = await ctx.author.voice.channel.connect()
+        self.queues[ctx.guild.id]['voice'] = await ctx.author.voice.channel.connect()
         return True
 
-    async def leave_voice_channel(self, ctx):
-        if self.voice is not None:
-            await self.voice.disconnect()
-            self.voice = None
+    async def leave_voice_channel(self, ctx: commands.Context):
+        queue = self.queues[ctx.guild.id]
+        if queue['voice'] is not None:
+            await queue['voice'].disconnect()
+            queue['voice'] = None
 
-    async def play_next(self):
-        if len(self.queue) > 0:
-            self.is_playing = True
-            url = self.queue[0]["url"]
-            print(url)
-            self.voice.play(disnake.FFmpegPCMAudio(url, **FFMPEG_OPTIONS))
-            self.queue.pop(0)
+    async def play_next(self, guild_id: int):
+        info = self.queues[guild_id]
+        if len(info['queue']) >= 1:
+            url = info['queue'].popleft()
+            info['voice'].play(
+                disnake.FFmpegPCMAudio(url, **FFMPEG_OPTIONS),
+                after=lambda: asyncio.run_coroutine_threadsafe(self.play_next(guild_id), self.bot.loop)
+            )
         else:
-            self.is_playing = False
+            info['voice'] = await info['voice'].disconnect()
 
-    @commands.slash_command()
-    async def play(self, ctx, url: str):
-        if self.voice is None:
+    @commands.command()
+    async def play(self, ctx: commands.Context, url: str):
+        async with GuildInfoTable() as guild_table:
+            info: GuildInfo = await guild_table.get_by_key(ctx.guild.id)
+            print(ctx.guild.id)
+            music_chanenel = info.music_channel_id
+        if music_chanenel is not None and ctx.channel.id != music_chanenel:
+            channel = self.bot.get_channel(music_chanenel)
+            msg_content = ctx.message.content
+            await ctx.message.delete()
+            text = f"{ctx.author.mention}, ваше сообщение автоматически перенесено на этот канал:\n*{msg_content}*"
+            ctx.message = await channel.send(text)
+        if self.queues[ctx.guild.id]['voice'] is None:
             if not await self.join_voice_channel(ctx):
                 return
+        loop = asyncio.get_event_loop()
+        data = await loop.run_in_executor(None, lambda: self.ytdl.extract_info(url, download=False))
+        song = data['url']
 
-
-        with youtube_dl.YoutubeDL(YDL_OPTIONS) as ydl:
-            info = ydl.extract_info(url, download=False)
-            url2 = info['formats'][0]['url']
-
-        self.queue.append({"url": url2})
-        if not self.is_playing:
-            await self.play_next()
+        self.queues[ctx.guild.id]['queue'].append(song)
+        if not (len(self.queues[ctx.guild.id]['queue']) > 1):
+            await self.play_next(ctx.guild.id)
 
     @commands.command()
-    async def stop(self, ctx):
-        if self.voice is not None and self.voice.is_playing():
-            self.voice.stop()
-            self.is_playing = False
-            await ctx.send("Музыка остановлена.")
+    async def stop(self, ctx: commands.Context):
+        self.queues[ctx.guild.id]['queue'].clear()
+        await self.skip(ctx)
 
     @commands.command()
-    async def skip(self, ctx):
-        if self.voice is not None and self.voice.is_playing():
-            self.voice.stop()
-            await ctx.send("Текущая песня пропущена.")
+    async def skip(self, ctx: commands.Context):
+        if self.queues[ctx.guild.id]['voice'] is None:
+            return await ctx.send("Бот не играет музыку")
+        self.queues[ctx.guild.id]['voice'].stop()
 
     @commands.command()
-    async def leave(self, ctx):
-        await self.leave_voice_channel(ctx)
-        await ctx.send("Покинул голосовой канал.")
+    async def set_mc(self, ctx: commands.Context):
+        if ctx.message.author.id != ctx.guild.owner_id:
+            return await ctx.send("У вас не хватает прав")
+
+        async with GuildInfoTable() as guild_table:
+            await guild_table.update_by_key(ctx.guild.id, 'music_channel_id', ctx.channel.id)
+
+        await ctx.send("Канал для музыкальных комманд установлен")
 
     @commands.command()
-    async def ensure_voice(self, ctx: commands.Context):
-        if ctx.voice_client is None:
-            if ctx.author.voice is not None:
-                await ctx.author.voice.channel.connect()
-            else:
-                await ctx.send("Вы должны находиться в голосовом канале, чтобы воспроизводить музыку.")
-                raise commands.CommandError("Автор не находится в голосовом канале.")
+    async def unset_mc(self, ctx: commands.Context):
+        if ctx.message.author.id != ctx.guild.owner_id:
+            return await ctx.send("У вас не хватает прав")
 
-    @stop.before_invoke
-    async def ensure_playing(self, ctx):
-        if ctx.voice_client is None or not ctx.voice_client.is_playing():
-            await ctx.send("Сейчас ничего не играет.")
-            raise commands.CommandError("Нет активного воспроизведения музыки.")
+        async with GuildInfoTable() as guild_table:
+            await guild_table.update_by_key(ctx.guild.id, 'music_channel_id', None)
 
-
-
+        await ctx.send("Музыкальный канал откреплен")
