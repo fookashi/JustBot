@@ -1,6 +1,6 @@
 import re
 from io import BytesIO
-from secrets import choice
+from random import choice
 import aiohttp
 
 from models.images import DemotivatorImage, ImageToDemotivator

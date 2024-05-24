@@ -24,9 +24,9 @@ class MusicPlayer(commands.Cog):
     
     def __init__(self, bot: JustBot):
         self.bot = bot
-        self.queues = defaultdict(lambda: {'voice': None, 'queue': deque()})
+        self.queues = defaultdict(lambda: {'voice': None, 'queue': deque(), 'is_playing': False})
         self.ytdl = yt_dlp.YoutubeDL(YDL_OPTIONS)
-
+    
     async def join_voice_channel(self, ctx: commands.Context):
         if ctx.author.voice is None:
             await ctx.send("Вы должны быть в голосовом канале, чтобы использовать эту команду.")
@@ -46,19 +46,18 @@ class MusicPlayer(commands.Cog):
             url = info['queue'].popleft()
             info['voice'].play(
                 disnake.FFmpegPCMAudio(url, **FFMPEG_OPTIONS),
-                after=lambda: asyncio.run_coroutine_threadsafe(self.play_next(guild_id), self.bot.loop)
+                after=lambda e=None: self.play_next(guild_id)
             )
         else:
+            asyncio.sleep(90)
+            info['is_playing'] = False
             info['voice'] = await info['voice'].disconnect()
 
     @commands.command()
     async def play(self, ctx: commands.Context, url: str):
-        async with GuildInfoTable() as guild_table:
-            info: GuildInfo = await guild_table.get_by_key(ctx.guild.id)
-            print(ctx.guild.id)
-            music_chanenel = info.music_channel_id
-        if music_chanenel is not None and ctx.channel.id != music_chanenel:
-            channel = self.bot.get_channel(music_chanenel)
+        info = await self.bot.get_guild_info(ctx.guild.id)
+        if info.music_channel_id is not None and ctx.channel.id != info.music_channel_id:
+            channel = self.bot.get_channel(info.music_channel_id)
             msg_content = ctx.message.content
             await ctx.message.delete()
             text = f"{ctx.author.mention}, ваше сообщение автоматически перенесено на этот канал:\n*{msg_content}*"
@@ -71,7 +70,7 @@ class MusicPlayer(commands.Cog):
         song = data['url']
 
         self.queues[ctx.guild.id]['queue'].append(song)
-        if not (len(self.queues[ctx.guild.id]['queue']) > 1):
+        if not self.queues[ctx.guild.id]['is_playing']:
             await self.play_next(ctx.guild.id)
 
     @commands.command()

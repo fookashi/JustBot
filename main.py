@@ -38,5 +38,9 @@ async def on_guild_remove(guild: disnake.Guild):
         print('Информация о сервере удалена из БД')
 
 
-if __name__ == '__main__':
+def start():
     bot.run(TOKEN)
+
+
+if __name__ == '__main__':
+    start()
