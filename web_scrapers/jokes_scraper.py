@@ -46,7 +46,7 @@ class JokesScrapper(BaseScrapper):
     async def do_copypaste(self) -> CopypasteData | None:
         msgs = await self._scrape_copypastes()
         msg_id = random.choice(msgs)  # noqa: S311
-        msg = await self.tg_handler.get_message_by_peer_and_id(peer_id=1640385961, msg_id=msg_id)
+        msg = await self.tg_handler.get_message_by_peer_and_id(channel_id=1640385961, msg_id=msg_id)
         if msg is None:
             await self._scrape_copypastes()
             return await self.do_copypaste()

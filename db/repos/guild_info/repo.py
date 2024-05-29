@@ -1,11 +1,17 @@
+from motor.motor_asyncio import AsyncIOMotorCollection
+
 from db.repos.base import BaseRepo
 from db.repos.guild_info.model import GuildInfo
 
 
 class GuildInfoRepo(BaseRepo):
     @property
-    def table(self) -> str:
-        return "guild_info"
+    def _collection_name(self) -> str:
+        return "guildInfo"
+
+    @property
+    def collection(self) -> AsyncIOMotorCollection:
+        return self._database.get_collection(self._collection_name)
 
     @property
     def model(self) -> GuildInfo:

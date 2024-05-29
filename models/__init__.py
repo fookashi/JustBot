@@ -1,1 +1,1 @@
-"""Pydantic models for validating dtos that used in project."""
+"""Pydantic models for validating data transfer objects that used in project."""

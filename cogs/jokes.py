@@ -2,7 +2,7 @@ from disnake import File, Message
 from disnake.ext import commands
 
 from bot import JustBot
-from db.repos.guild_info import GuildInfoTable
+from db.repos.guild_info import GuildInfoRepo
 from models.images import ImageToDemotivator
 from utils.demotivator_creator import DemotivatorCreator
 from web_scrapers import JokesScrapper
@@ -96,7 +96,8 @@ class FunnyCogs(commands.Cog):
             if msg_content.split()[0][1:] in self.get_commands():
                 await message.delete()
                 return await channel.send(
-                    f"{message.author.mention}, ваше сообщение автоматически перенесено на этот канал:\n*{msg_content}*"
+                    f"{message.author.mention}, ваше сообщение автоматически \
+                        перенесено на этот канал:\n*{msg_content}*",
                 )
 
         if guild_info.auto_demo:
@@ -125,25 +126,19 @@ class FunnyCogs(commands.Cog):
     @commands.command()
     async def set_sc(self, ctx: commands.Context) -> Message:
         if ctx.message.author.id != ctx.guild.owner_id:
-            return await ctx.send("У вас не хватает прав")  # noqa: RUF001
+            return await ctx.send("У вас не хватает прав")
 
-        async with GuildInfoTable() as guild_table:
-            await guild_table.update_by_key(ctx.guild.id, "spam_channel_id", ctx.channel.id)
-            if self.bot.guild_infos.get(ctx.guild.id) is None:
-                return None
-            self.bot.guild_infos[ctx.guild.id]["spam_channel_id"] = ctx.channel.id
+        async with GuildInfoRepo() as guild_repo:
+            await guild_repo.update_one(ctx.guild.id, "guild_id", {"spam_channel_id": ctx.channel.id})
 
         return await ctx.send("Канал для спама канал установлен")
 
     @commands.command()
     async def unset_sc(self, ctx: commands.Context) -> Message:
         if ctx.message.author.id != ctx.guild.owner_id:
-            return await ctx.send("У вас не хватает прав")  # noqa: RUF001
+            return await ctx.send("У вас не хватает прав")
 
-        async with GuildInfoTable() as guild_table:
-            await guild_table.update_by_key(ctx.guild.id, "spam_channel_id", None)
-            if self.bot.guild_infos.get(ctx.guild.id) is None:
-                return None
-            self.bot.guild_infos[ctx.guild.id]["spam_channel_id"] = None
+        async with GuildInfoRepo() as guild_repo:
+            await guild_repo.update_one(ctx.guild.id, "guild_id", {"spam_channel_id": None})
 
         return await ctx.send("Канал для спама откреплен")

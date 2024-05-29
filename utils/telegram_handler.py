@@ -9,9 +9,9 @@ from singleton import Singleton
 
 class TelegramClientHandler(metaclass=Singleton):
     def __init__(self) -> None:
-        env_vars = get_settings().get_secrets()
-        api_id = env_vars.get("tg_api_id")
-        tg_api_hash = env_vars.get("tg_api_hash")
+        settings = get_settings()
+        api_id = settings.TG_API_ID
+        tg_api_hash = settings.TG_API_HASH
         self.client = telethon.TelegramClient("justbot", api_id, tg_api_hash)
         self.client.start()
 

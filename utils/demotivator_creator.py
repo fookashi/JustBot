@@ -43,7 +43,7 @@ class DemotivatorCreator:
     def __init__(self) -> None:
         self.url = "https://ademotivatory.ru/create/rezult.php"
 
-    async def create_demotivator(self, image: ImageToDemotivator, text: str = None) -> DemotivatorImage | None:
+    async def create_demotivator(self, image: ImageToDemotivator, text: str | None = None) -> DemotivatorImage | None:
         form_data = aiohttp.FormData()
 
         if text is None:
@@ -73,8 +73,8 @@ class DemotivatorCreator:
                 text = await resp.text()
                 try:
                     link = next(re.finditer(r"http://ademotivatory\.ru/create/dem\S*", text)).group()[:-1]
-                except Exception as e:
-                    return print(e)
+                except StopIteration:
+                    return None
 
             async with session.get(link) as resp:
                 if resp.status != 200:  # noqa: PLR2004
