@@ -6,7 +6,6 @@ import disnake
 from bot import JustBot
 from cogs.jokes import FunnyCogs
 from cogs.music_player import MusicPlayer
-from db.config import client
 from db.repos.guild_info import GuildInfoRepo
 from settings import get_settings
 
@@ -39,9 +38,15 @@ async def on_guild_remove(guild: disnake.Guild) -> None:
         logging.info("Информация о сервере удалена из БД")
 
 
-def main() -> None:
-    bot.run(settings.BOT_TOKEN)
+async def main() -> None:
+    await bot.start(settings.BOT_TOKEN)
 
 
 if __name__ == "__main__":
-    main()
+    loop = asyncio.get_event_loop()
+    try:
+        loop.run_until_complete(main())
+    except KeyboardInterrupt:
+        loop.run_until_complete(bot.close())
+    finally:
+        loop.close()

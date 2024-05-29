@@ -26,7 +26,7 @@ class MusicPlayer(commands.Cog):
     def __init__(self, bot: JustBot) -> None:
         self.bot = bot
         self.music_infos: dict[int, GuildMusicInfo] = defaultdict(GuildMusicInfo)
-        self.ytdl = yt_dlp.YoutubeDL
+        self.ytdl = yt_dlp.YoutubeDL(YDL_OPTIONS)
 
     async def join_voice_channel(self, ctx: commands.Context) -> bool:
         if ctx.author.voice is None:
@@ -67,7 +67,7 @@ class MusicPlayer(commands.Cog):
         if music_info.voice is None and not await self.join_voice_channel(ctx):
             return None
         loop = asyncio.get_event_loop()
-        data = await loop.run_in_executor(None, lambda: self.ytdl(YDL_OPTIONS).extract_info(url, download=False))
+        data = await loop.run_in_executor(None, lambda: self.ytdl.extract_info(url, download=False))
         song = data["url"]
         music_info.playlist.append(song)
         if not music_info.is_playing:
@@ -83,11 +83,12 @@ class MusicPlayer(commands.Cog):
     @commands.command()
     async def skip(self, ctx: commands.Context) -> disnake.Message | None:
         if self.music_infos[ctx.guild.id].voice is None:
-            return await ctx.send("Бот не играет музыку")
+            return await ctx.send("Бот не играет музыку!")
         self.music_infos[ctx.guild.id].voice.stop()
         if not len(self.music_infos[ctx.guild].playlist):
             await self.leave_voice_channel(ctx)
-        return await ctx.send("Песня убрана из плейлиста")
+            return await ctx.send("Плейлист пуст, я пошел.")
+        return await ctx.send("Песня убрана из плейлиста.")
 
     @commands.command()
     async def set_mc(self, ctx: commands.Context) -> disnake.Message:

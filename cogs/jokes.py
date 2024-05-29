@@ -1,10 +1,13 @@
+import logging
+
 from disnake import File, Message
 from disnake.ext import commands
+from pydantic import ValidationError
 
 from bot import JustBot
 from db.repos.guild_info import GuildInfoRepo
 from models.images import ImageToDemotivator
-from utils.demotivator_creator import DemotivatorCreator
+from utils.demotivator_creator import DemotivatorCreator, DemotivatorCreatorError
 from web_scrapers import JokesScrapper
 
 
@@ -57,7 +60,7 @@ class FunnyCogs(commands.Cog):
         image = ctx.message.attachments[0]
         try:
             image = ImageToDemotivator(name=image.filename, content_type=image.content_type, image=await image.read())
-        except Exception as e:
+        except ValidationError as e:
             return await ctx.send(f"Ошибка при преобразовании изображения: {e}")
 
         demotivator = await self.demo_creator.create_demotivator(text=text, image=image)
@@ -73,11 +76,14 @@ class FunnyCogs(commands.Cog):
 
     async def auto_demo(self, message: Message) -> Message:
         if not (hasattr(message, "attachments") and len(message.attachments) == 1):
-            raise Exception("Not valid message for auto-demotivator")
+            msg = "Not valid message for auto-demotivator"
+            raise DemotivatorCreatorError(msg)
 
         attachment = message.attachments[0]
         image = ImageToDemotivator(
-            name=attachment.filename, content_type=attachment.content_type, image=await attachment.read()
+            name=attachment.filename,
+            content_type=attachment.content_type,
+            image=await attachment.read(),
         )
         demotivator = await self.demo_creator.create_demotivator(image=image)
 
@@ -103,8 +109,8 @@ class FunnyCogs(commands.Cog):
         if guild_info.auto_demo:
             try:
                 return await self.auto_demo(message)
-            except Exception as e:
-                print(e)
+            except DemotivatorCreatorError:
+                logging.exception("Error whle trying creating autodemotivator")
         return None
 
     @commands.command()

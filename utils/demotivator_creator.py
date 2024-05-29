@@ -39,6 +39,9 @@ DEMO_TEXTS = (
 )
 
 
+class DemotivatorCreatorError(Exception): ...
+
+
 class DemotivatorCreator:
     def __init__(self) -> None:
         self.url = "https://ademotivatory.ru/create/rezult.php"
@@ -69,16 +72,19 @@ class DemotivatorCreator:
         async with aiohttp.ClientSession() as session:
             async with session.post(self.url, data=form_data) as resp:
                 if resp.status != 200:  # noqa: PLR2004
-                    return None
+                    msg = "Bad status from server"
+                    raise DemotivatorCreatorError(msg)
                 text = await resp.text()
                 try:
                     link = next(re.finditer(r"http://ademotivatory\.ru/create/dem\S*", text)).group()[:-1]
                 except StopIteration:
-                    return None
+                    msg = "Error while processing image link"
+                    raise DemotivatorCreatorError(msg)  # noqa: B904
 
             async with session.get(link) as resp:
                 if resp.status != 200:  # noqa: PLR2004
-                    return None
+                    msg = "Bad status from server"
+                    raise DemotivatorCreatorError(msg)
                 data = BytesIO(await resp.read())
                 name = link.split("/")[-1]
                 return DemotivatorImage(name=name, image=data)
