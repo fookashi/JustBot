@@ -1,36 +1,35 @@
+from typing import Iterator
+
 import telethon
 from telethon.tl.types import PeerChannel
 
 from settings import get_settings
+from singleton import Singleton
 
 
-class TelegramClientHandler:
-    def __init__(self):
+class TelegramClientHandler(metaclass=Singleton):
+    def __init__(self) -> None:
         env_vars = get_settings().get_secrets()
-        API_ID = env_vars.get('tg_api_id')
-        TG_API_HASH = env_vars.get('tg_api_hash')
-        self.client = telethon.TelegramClient('justbot', API_ID, TG_API_HASH)
+        api_id = env_vars.get("tg_api_id")
+        tg_api_hash = env_vars.get("tg_api_hash")
+        self.client = telethon.TelegramClient("justbot", api_id, tg_api_hash)
         self.client.start()
 
-    async def _get_data_with_soup(self, url: str):
-        raise NotImplementedError
+    async def get_data_from_tg_chanel(self, channel_id: int, limit: int = 100) -> Iterator[telethon.types.Message]:
+        entity = PeerChannel(channel_id)
+        return self.client.iter_messages(entity, limit=limit)
 
-    async def _get_data_from_tg_chanel(self, id: int, limit=100):
-        entity = PeerChannel(id)
-        data = self.client.iter_messages(entity, limit=limit)
-        return data
-
-    async def _check_channels_data(self, title: str):
+    async def check_channels_data(self, title: str) -> list | None:
         data = await self.client.get_dialogs()
         try:
             needed = next(filter(lambda x: x.title == title, data))
-        except Exception:
+        except StopIteration:
             return None
         return needed
 
-    async def get_message_by_peer_and_id(self, peer_id: int, msg_id: int):
-        entity = PeerChannel(peer_id)
-        data = await self.client.get_messages(entity, max_id=msg_id+1, min_id=msg_id-1)
+    async def get_message_by_peer_and_id(self, channel_id: int, msg_id: int) -> telethon.types.Message:
+        entity = PeerChannel(channel_id)
+        data = await self.client.get_messages(entity, max_id=msg_id + 1, min_id=msg_id - 1)
         if len(data) != 1:
             return None
         return data[0]

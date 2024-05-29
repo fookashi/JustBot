@@ -1,24 +1,24 @@
-from disnake.ext import commands
 from disnake import File, Message
+from disnake.ext import commands
 
 from bot import JustBot
-from web_scrapers import JokesScrapper
-from utils.demotivator_creator import DemotivatorCreator
+from db.repos.guild_info import GuildInfoTable
 from models.images import ImageToDemotivator
-from db.tables import GuildInfoTable
+from utils.demotivator_creator import DemotivatorCreator
+from web_scrapers import JokesScrapper
 
 
 class FunnyCogs(commands.Cog):
-    def __init__(self, bot: JustBot):
-        self.bot = bot
+    def __init__(self, bot: JustBot) -> None:
+        self.bot: JustBot = bot
         self.stupid_jokes_url = "https://www.anekdot.ru/release/anekdot/week/"
         self.jokes_scraper = JokesScrapper(bot.tg_handler)
         self.demo_creator = DemotivatorCreator()
 
     @commands.command()
-    async def stupid_joke(self, ctx: commands.Context):
+    async def stupid_joke(self, ctx: commands.Context) -> Message:
         joke = await self.jokes_scraper.do_stupid_joke()
-        if joke == '':
+        if joke == "":
             return await self.stupid_joke(ctx)
         guild_info = await self.bot.get_guild_info(ctx.guild.id)
         if guild_info.spam_channel_id is not None:
@@ -27,9 +27,9 @@ class FunnyCogs(commands.Cog):
         return await ctx.send(joke)
 
     @commands.command()
-    async def joke(self, ctx: commands.Context):
+    async def joke(self, ctx: commands.Context) -> Message:
         joke = await self.jokes_scraper.do_category_b_joke()
-        if joke == '':
+        if joke == "":
             return await self.joke(ctx)
         guild_info = await self.bot.get_guild_info(ctx.guild.id)
         if guild_info.spam_channel_id is not None:
@@ -38,7 +38,7 @@ class FunnyCogs(commands.Cog):
         return await ctx.send(joke)
 
     @commands.command()
-    async def copypaste(self, ctx: commands.Context):
+    async def copypaste(self, ctx: commands.Context) -> Message:
         copypaste = await self.jokes_scraper.do_copypaste()
         if copypaste.image is not None:
             return await ctx.send(copypaste.text, file=File(copypaste.image))
@@ -49,12 +49,9 @@ class FunnyCogs(commands.Cog):
         return await ctx.send(copypaste.text)
 
     @commands.command()
-    async def demo(self, ctx: commands.Context, *args):
-        if not len(args):
-            text = None
-        else:
-            text = " ".join(args)
-        if not hasattr(ctx, 'message') or not ctx.message.attachments:
+    async def demo(self, ctx: commands.Context, *args: int) -> Message:
+        text = None if not len(args) else " ".join(args)
+        if not hasattr(ctx, "message") or not ctx.message.attachments:
             return await ctx.send("Необходимо прикрепить изображение для создания демотиватора")
 
         image = ctx.message.attachments[0]
@@ -74,46 +71,48 @@ class FunnyCogs(commands.Cog):
 
         return await ctx.send(file=File(demotivator.image, filename=demotivator.name))
 
-    async def auto_demo(self, message: Message):
-        if not (hasattr(message, 'attachments') and len(message.attachments) == 1):
-            raise Exception('Not valid message for auto-demotivator')
+    async def auto_demo(self, message: Message) -> Message:
+        if not (hasattr(message, "attachments") and len(message.attachments) == 1):
+            raise Exception("Not valid message for auto-demotivator")
 
         attachment = message.attachments[0]
-        image = ImageToDemotivator(name=attachment.filename,
-                                   content_type=attachment.content_type,
-                                   image=await attachment.read())
+        image = ImageToDemotivator(
+            name=attachment.filename, content_type=attachment.content_type, image=await attachment.read()
+        )
         demotivator = await self.demo_creator.create_demotivator(image=image)
 
         return await message.reply(file=File(demotivator.image, filename=demotivator.name))
-    
+
     @commands.Cog.listener()
-    async def on_message(self, message: Message):
+    async def on_message(self, message: Message) -> None:
         if message.author.bot:
-            return
+            return None
         guild_info = await self.bot.get_guild_info(message.guild.id)
 
         channel = self.bot.get_channel(guild_info.spam_channel_id)
 
-        if channel is not None and message.content.startswith(('!', '/')):
+        if channel is not None and message.content.startswith(("!", "/")):
             msg_content = message.content
             if msg_content.split()[0][1:] in self.get_commands():
                 await message.delete()
-                return await channel.send(f"{message.author.mention}, ваше сообщение автоматически перенесено на этот канал:\n*{msg_content}*")
+                return await channel.send(
+                    f"{message.author.mention}, ваше сообщение автоматически перенесено на этот канал:\n*{msg_content}*"
+                )
 
         if guild_info.auto_demo:
             try:
                 return await self.auto_demo(message)
             except Exception as e:
                 print(e)
-
+        return None
 
     @commands.command()
-    async def frog(self, ctx: commands.Context):
+    async def frog(self, ctx: commands.Context) -> Message:
         frog_data = await self.jokes_scraper.get_frog()
         data = {}
-        data['content'] = frog_data.text
+        data["content"] = frog_data.text
         if frog_data.image is not None:
-            data['file'] = File(frog_data.image, filename='frog.jpg')
+            data["file"] = File(frog_data.image, filename="frog.jpg")
         guild_info = await self.bot.get_guild_info(ctx.guild.id)
 
         channel = self.bot.get_channel(guild_info.spam_channel_id)
@@ -123,29 +122,28 @@ class FunnyCogs(commands.Cog):
 
         return await ctx.send(**data)
 
-
     @commands.command()
-    async def set_sc(self, ctx: commands.Context):
+    async def set_sc(self, ctx: commands.Context) -> Message:
         if ctx.message.author.id != ctx.guild.owner_id:
-            return await ctx.send("У вас не хватает прав")
+            return await ctx.send("У вас не хватает прав")  # noqa: RUF001
 
         async with GuildInfoTable() as guild_table:
-            await guild_table.update_by_key(ctx.guild.id, 'spam_channel_id', ctx.channel.id)
+            await guild_table.update_by_key(ctx.guild.id, "spam_channel_id", ctx.channel.id)
             if self.bot.guild_infos.get(ctx.guild.id) is None:
-                return
-            self.bot.guild_infos[ctx.guild.id]['spam_channel_id'] = ctx.channel.id
+                return None
+            self.bot.guild_infos[ctx.guild.id]["spam_channel_id"] = ctx.channel.id
 
-        await ctx.send("Канал для спама канал установлен")
+        return await ctx.send("Канал для спама канал установлен")
 
     @commands.command()
-    async def unset_sc(self, ctx: commands.Context):
+    async def unset_sc(self, ctx: commands.Context) -> Message:
         if ctx.message.author.id != ctx.guild.owner_id:
-            return await ctx.send("У вас не хватает прав")
+            return await ctx.send("У вас не хватает прав")  # noqa: RUF001
 
         async with GuildInfoTable() as guild_table:
-            await guild_table.update_by_key(ctx.guild.id, 'spam_channel_id', None)
+            await guild_table.update_by_key(ctx.guild.id, "spam_channel_id", None)
             if self.bot.guild_infos.get(ctx.guild.id) is None:
-                return
-            self.bot.guild_infos[ctx.guild.id]['spam_channel_id'] = None
+                return None
+            self.bot.guild_infos[ctx.guild.id]["spam_channel_id"] = None
 
-        await ctx.send("Канал для спама откреплен")
+        return await ctx.send("Канал для спама откреплен")
