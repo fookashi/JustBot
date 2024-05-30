@@ -3,10 +3,8 @@ from collections import defaultdict
 
 import disnake
 import yt_dlp
-from disnake.ext import commands
-
-from bot import JustBot
 from db.repos.guild_info import GuildInfoRepo
+from disnake.ext import commands
 from models.guild_music_info import GuildMusicInfo
 
 FFMPEG_OPTIONS = {"before_options": "-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5", "options": "-vn"}
@@ -23,10 +21,10 @@ YDL_OPTIONS = {
 
 
 class MusicPlayer(commands.Cog):
-    def __init__(self, bot: JustBot) -> None:
-        self.bot = bot
+    def __init__(self, bot: commands.Bot) -> None:
+        self.bot: commands.Bot = bot
         self.music_infos: dict[int, GuildMusicInfo] = defaultdict(GuildMusicInfo)
-        self.ytdl = yt_dlp.YoutubeDL(YDL_OPTIONS)
+        self.ytdl: yt_dlp.YoutubeDL = yt_dlp.YoutubeDL(YDL_OPTIONS)
 
     async def join_voice_channel(self, ctx: commands.Context) -> bool:
         if ctx.author.voice is None:

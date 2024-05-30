@@ -1,11 +1,10 @@
 import logging
 
 import disnake
-
-from bot import JustBot
 from cogs.jokes import FunnyCogs
 from cogs.music_player import MusicPlayer
 from db.repos.guild_info import GuildInfoRepo
+from just_bot import JustBot
 from settings import get_settings
 
 settings = get_settings()

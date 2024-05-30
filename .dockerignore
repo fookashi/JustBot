@@ -1,0 +1,21 @@
+# Ignore everything
+*
+
+# Allow directories
+!/bot
+
+
+# Allow files
+!/docker-compose.yml
+!/Dockerfile
+!/.dockerignore
+!/poetry.lock
+!/pyproject.toml
+!/.env
+!/README.md
+!/LICENSE.md
+
+# Ignore unnecessary files inside allowed directories
+# This should go after the allowed directories
+**/*~
+**/*.log

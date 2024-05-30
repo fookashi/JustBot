@@ -1,20 +1,18 @@
 import logging
 import os
 
+from db.repos.guild_info import GuildInfoRepo
 from disnake import File, Message
 from disnake.ext import commands
-from pydantic import ValidationError
-
-from bot import JustBot
-from db.repos.guild_info import GuildInfoRepo
 from models.images import ImageToDemotivator
+from pydantic import ValidationError
 from utils.demotivator_creator import DemotivatorCreator, DemotivatorCreatorError
-from web_scrapers import JokesScrapper
+from utils.web_scrapers import JokesScrapper
 
 
 class FunnyCogs(commands.Cog):
-    def __init__(self, bot: JustBot) -> None:
-        self.bot: JustBot = bot
+    def __init__(self, bot: commands.Bot) -> None:
+        self.bot: commands.Bot = bot
         self.stupid_jokes_url = "https://www.anekdot.ru/release/anekdot/week/"
         self.jokes_scraper = JokesScrapper(bot.tg_handler)
         self.demo_creator = DemotivatorCreator()

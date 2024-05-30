@@ -1,10 +1,9 @@
 from typing import Iterator
 
 import telethon
-from telethon.tl.types import PeerChannel
-
 from settings import get_settings
-from singleton import Singleton
+from telethon.tl.types import PeerChannel
+from utils.singleton import Singleton
 
 
 class TelegramClientHandler(metaclass=Singleton):

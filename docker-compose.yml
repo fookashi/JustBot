@@ -9,7 +9,7 @@ services:
     env_file:
       - .env
     ports:
-      - "27017:27017"
+      - "${MONGO_PORT}:${MONGO_PORT}"
     environment:
       - "MONGO_INITDB_DATABASE=${MONGO_DB}"
       - "MONGO_INITDB_ROOT_USERNAME=${MONGO_USER}"
@@ -20,12 +20,14 @@ services:
       timeout: 10s
       retries: 1
     restart: unless-stopped
-    command:
-        - '--logpath'
-        - '/var/log/mongodb/mongod.log'
-    bot:
-      env_file:
-        - .env
+    command: mongod --quiet
+  bot:
+    container_name: justBot
+    build:
+      context: ./bot
+      dockerfile: Dockerfile
+    env_file:
+      - .env
 
 volumes:
   logs:

@@ -1,7 +1,6 @@
-from disnake.ext import commands
-
 from db.repos.guild_info import GuildInfoRepo
 from db.repos.guild_info.model import GuildInfo
+from disnake.ext import commands
 from utils.telegram_handler import TelegramClientHandler
 
 

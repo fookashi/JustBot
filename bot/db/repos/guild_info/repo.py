@@ -1,7 +1,6 @@
-from motor.motor_asyncio import AsyncIOMotorCollection
-
 from db.repos.base import BaseRepo
 from db.repos.guild_info.model import GuildInfo
+from motor.motor_asyncio import AsyncIOMotorCollection
 
 
 class GuildInfoRepo(BaseRepo):

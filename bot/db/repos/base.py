@@ -1,12 +1,14 @@
 from types import TracebackType
 from typing import Any, Self
 
-from motor.motor_asyncio import AsyncIOMotorClientSession, AsyncIOMotorCollection, AsyncIOMotorDatabase
-
 from db.config import client
 from models.base import BaseModel
+from motor.motor_asyncio import AsyncIOMotorClientSession, AsyncIOMotorCollection, AsyncIOMotorDatabase
+from settings import get_settings
 
 __all__ = ["BaseRepo"]
+
+settings = get_settings()
 
 
 class BaseRepo:
@@ -14,7 +16,7 @@ class BaseRepo:
 
     @property
     def _database(self) -> AsyncIOMotorDatabase:
-        return client.get_default_database()
+        return client.get_database(settings.MONGO_DB)
 
     @property
     def _collection_name(self) -> str:

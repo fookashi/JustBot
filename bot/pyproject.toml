@@ -17,8 +17,13 @@ bs4 = "^0.0.2"
 html5lib = "^1.1"
 yt-dlp = "^2024.5.27"
 aiofiles = "^23.2.1"
+taskipy = "^1.12.2"
 
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.taskipy.tasks]
+start = { cmd = "python -m main", help = "run the bot" }
+ruff = { cmd = "ruff check .", help = "run ruff formatter" }
