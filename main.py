@@ -1,4 +1,3 @@
-import asyncio
 import logging
 
 import disnake
@@ -38,15 +37,5 @@ async def on_guild_remove(guild: disnake.Guild) -> None:
         logging.info("Информация о сервере удалена из БД")
 
 
-async def main() -> None:
-    await bot.start(settings.BOT_TOKEN)
-
-
 if __name__ == "__main__":
-    loop = asyncio.get_event_loop()
-    try:
-        loop.run_until_complete(main())
-    except KeyboardInterrupt:
-        loop.run_until_complete(bot.close())
-    finally:
-        loop.close()
+    bot.run(settings.BOT_TOKEN)

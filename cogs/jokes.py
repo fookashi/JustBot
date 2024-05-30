@@ -1,4 +1,5 @@
 import logging
+import os
 
 from disnake import File, Message
 from disnake.ext import commands
@@ -44,7 +45,9 @@ class FunnyCogs(commands.Cog):
     async def copypaste(self, ctx: commands.Context) -> Message:
         copypaste = await self.jokes_scraper.do_copypaste()
         if copypaste.image is not None:
-            return await ctx.send(copypaste.text, file=File(copypaste.image))
+            await ctx.send(copypaste.text, file=File(fp=copypaste.image, filename="copypaste.jpg"))
+            os.remove(copypaste.image)  # noqa: PTH107
+            return None
         guild_info = await self.bot.get_guild_info(ctx.guild.id)
         if guild_info.spam_channel_id is not None:
             channel = self.bot.get_channel(guild_info.spam_channel_id)
@@ -76,8 +79,7 @@ class FunnyCogs(commands.Cog):
 
     async def auto_demo(self, message: Message) -> Message:
         if not (hasattr(message, "attachments") and len(message.attachments) == 1):
-            msg = "Not valid message for auto-demotivator"
-            raise DemotivatorCreatorError(msg)
+            return None
 
         attachment = message.attachments[0]
         image = ImageToDemotivator(

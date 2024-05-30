@@ -16,6 +16,7 @@ telethon = "^1.35.0"
 bs4 = "^0.0.2"
 html5lib = "^1.1"
 yt-dlp = "^2024.5.27"
+aiofiles = "^23.2.1"
 
 
 [build-system]

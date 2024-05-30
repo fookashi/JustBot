@@ -1,6 +1,7 @@
 import random
 from datetime import UTC, datetime
 
+import aiofiles.tempfile as aiotempfile
 from aiocache import cached
 from aiocache.serializers import PickleSerializer
 from telethon.tl.types import MessageMediaPhoto
@@ -53,7 +54,8 @@ class JokesScrapper(BaseScrapper):
         text = msg.text
         image = None
         if msg.media and isinstance(msg.media, MessageMediaPhoto):
-            image = await self.tg_handler.client.download_media(msg.media.photo, "tg_copypaste.jpg")
+            async with aiotempfile.NamedTemporaryFile("a+b", delete=False) as tf:
+                image = await self.tg_handler.client.download_media(msg.media.photo, tf.name)
         return CopypasteData(text=text, image=image)
 
     async def get_frog(self) -> FrogData:

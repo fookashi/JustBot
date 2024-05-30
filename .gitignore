@@ -4,6 +4,6 @@ __pycache__/
 *.session-journal
 *.jpg
 .env
-*.db
 *.vscode
 *.python-version
+poetry.lock
