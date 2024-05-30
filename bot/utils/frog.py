@@ -1,10 +1,11 @@
+import logging
 import random
 
 from utils import weekday_to_string
 
 FROG_LINKS = {
     # monday
-    "понедельник": [
+    0: [
         "https://i.imgur.com/GlXexz3.jpg",
         "https://i.imgur.com/IJ4Y0Ku.png",
         "https://i.imgur.com/jyncHsa.png",
@@ -12,7 +13,7 @@ FROG_LINKS = {
         "https://i.imgur.com/Tioa26u.png",
     ],
     # tuesday
-    "вторник": [
+    1: [
         "https://i.imgur.com/Hza7wmw.png",
         "https://i.imgur.com/5sffeZV.png",
         "https://i.imgur.com/Tioa26u.png",
@@ -26,7 +27,7 @@ FROG_LINKS = {
         "https://i.imgur.com/jyncHsa.png",
     ],
     # wednsday
-    "среда": [
+    2: [
         "https://i.imgur.com/bwdxIEh.jpg",
         "https://i.imgur.com/T3DUpmG.png",
         "https://i.imgur.com/ZZyeTZj.jpg",
@@ -163,7 +164,7 @@ FROG_LINKS = {
         "https://i.imgur.com/B4BrvoN.jpg",
     ],
     # thursday
-    "четверг": [
+    3: [
         "https://i.imgur.com/pFnqk0S.jpg",
         "https://i.imgur.com/WM73Dog.jpg",
         "https://i.imgur.com/TSHZCr7.jpg",
@@ -176,17 +177,17 @@ FROG_LINKS = {
         "https://i.imgur.com/Mffp0Ho.jpg",
     ],
     # friday
-    "пятница": [
+    4: [
         "https://i.imgur.com/OnfVaHt.png",
         "https://i.imgur.com/v8redB6.jpg",
     ],
     # saturday
-    "суббота": [
+    5: [
         "https://i.imgur.com/DCD0OB3.jpg",
         "https://i.imgur.com/t9Q98AJ.jpg",
     ],
     # sunday
-    "воскресенье": [
+    6: [
         "https://i.imgur.com/IFIS02O.jpg",
         "https://i.imgur.com/3iJaILL.jpg",
     ],
@@ -218,11 +219,8 @@ NOT_WEDNSDAYs_LINKS = [
     "https://i.imgur.com/rLtHyGx.jpg",
 ]
 FROG_LINKS = {k: v for k, v in FROG_LINKS.items() if v.extend(ANY) is None}
-FROG_LINKS = {
-    k: v
-    for k, v in FROG_LINKS.items()
-    if (k != "wednsday" and v.extend(NOT_WEDNSDAYs_LINKS) is None) or k == "wednsday"
-}
+FROG_LINKS = {k: v for k, v in FROG_LINKS.items() if (k != 2 and v.extend(NOT_WEDNSDAYs_LINKS) is None) or k == 2}
+
 
 
 class FrogTextConstructor:

@@ -4,6 +4,7 @@ from collections import defaultdict
 import disnake
 import yt_dlp
 from db.repos.guild_info import GuildInfoRepo
+from disnake import Message
 from disnake.ext import commands
 from models.guild_music_info import GuildMusicInfo
 
@@ -25,6 +26,7 @@ class MusicPlayer(commands.Cog):
         self.bot: commands.Bot = bot
         self.music_infos: dict[int, GuildMusicInfo] = defaultdict(GuildMusicInfo)
         self.ytdl: yt_dlp.YoutubeDL = yt_dlp.YoutubeDL(YDL_OPTIONS)
+        self.command_names: list[str] = [command.name for command in self.get_commands()]
 
     async def join_voice_channel(self, ctx: commands.Context) -> bool:
         if ctx.author.voice is None:
@@ -54,13 +56,6 @@ class MusicPlayer(commands.Cog):
 
     @commands.command()
     async def play(self, ctx: commands.Context, url: str) -> None:
-        guild_info = await self.bot.get_guild_info(ctx.guild.id)
-        if guild_info.music_channel_id is not None and ctx.channel.id != guild_info.music_channel_id:
-            channel = self.bot.get_channel(guild_info.music_channel_id)
-            msg_content = ctx.message.content
-            await ctx.message.delete()
-            text = f"{ctx.author.mention}, ваше сообщение автоматически перенесено на этот канал:\n*{msg_content}*"
-            ctx.message = await channel.send(text)
         music_info = self.music_infos[ctx.guild.id]
         if music_info.voice is None and not await self.join_voice_channel(ctx):
             return None
@@ -79,31 +74,32 @@ class MusicPlayer(commands.Cog):
         return await self.skip(ctx)
 
     @commands.command()
-    async def skip(self, ctx: commands.Context) -> disnake.Message | None:
+    async def skip(self, ctx: commands.Context) -> Message | None:
         if self.music_infos[ctx.guild.id].voice is None:
             return await ctx.send("Бот не играет музыку!")
         self.music_infos[ctx.guild.id].voice.stop()
         if not len(self.music_infos[ctx.guild].playlist):
             await self.leave_voice_channel(ctx)
-            return await ctx.send("Плейлист пуст, я пошел.")
-        return await ctx.send("Песня убрана из плейлиста.")
+            return None  # await ctx.send("Плейлист пуст, я пошел.")
+        return None  # await ctx.send("Песня убрана из плейлиста.")
 
     @commands.command()
-    async def set_mc(self, ctx: commands.Context) -> disnake.Message:
+    async def set_mc(self, ctx: commands.Context) -> Message:
         if ctx.message.author.id != ctx.guild.owner_id:
             return await ctx.send("У вас не хватает прав")
 
         async with GuildInfoRepo() as guild_repo:
-            await guild_repo.update_one(ctx.guild.id, "guild_id", {"music_channel_id": ctx.channel.id})
-
+            new_info = await guild_repo.update_one(ctx.guild.id, "guild_id", {"music_channel_id": ctx.channel.id})
+        self.bot.guild_infos[ctx.guild.id] = new_info
         return await ctx.send("Канал для музыкальных комманд установлен")
 
     @commands.command()
-    async def unset_mc(self, ctx: commands.Context) -> disnake.Message:
+    async def unset_mc(self, ctx: commands.Context) -> Message:
         if ctx.message.author.id != ctx.guild.owner_id:
             return await ctx.send("У вас не хватает прав")
 
         async with GuildInfoRepo() as guild_repo:
-            await guild_repo.update_one(ctx.guild.id, "guild_id", {"music_channel_id": None})
+            new_info = await guild_repo.update_one(ctx.guild.id, "guild_id", {"music_channel_id": None})
+        self.bot.guild_infos[ctx.guild.id] = new_info
 
         return await ctx.send("Музыкальный канал откреплен")

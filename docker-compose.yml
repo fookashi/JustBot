@@ -20,7 +20,7 @@ services:
       timeout: 10s
       retries: 1
     restart: unless-stopped
-    command: mongod --quiet
+    command: mongod --quiet --logpath /dev/null
   bot:
     container_name: justBot
     build:

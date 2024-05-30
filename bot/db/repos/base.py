@@ -30,8 +30,8 @@ class BaseRepo:
     def model(self) -> type[BaseModel]:
         return None
 
-    async def __aenter__(self) -> Self:
-        self.session = await client.start_session()
+    async def __aenter__(self, session: AsyncIOMotorClientSession = None) -> Self:
+        self.session = session or await client.start_session()
         return self
 
     async def __aexit__(
@@ -47,9 +47,13 @@ class BaseRepo:
         doc = await self.collection.find_one({key: value}, session=self.session)
         return self.model(**doc) if doc else None
 
-    async def update_one(self, value: Any, key: str, updated_values: dict) -> None:  # noqa: ANN401
+    async def update_one(self, value: Any, key: str, updated_values: dict) -> type[BaseModel] | None:  # noqa: ANN401
         key = key or "_id"
-        doc = await self.collection.update_one({key: value}, updated_values, session=self.session)
+        doc = await self.collection.find_one_and_update(
+            {key: value},
+            {"$set": updated_values},
+            session=self.session,
+        )
         return self.model(**doc) if doc else None
 
     async def remove_one(self, value: Any, key: str) -> None:  # noqa: ANN401

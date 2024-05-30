@@ -18,6 +18,7 @@ html5lib = "^1.1"
 yt-dlp = "^2024.5.27"
 aiofiles = "^23.2.1"
 taskipy = "^1.12.2"
+fake-useragent = "^1.5.1"
 
 
 [build-system]

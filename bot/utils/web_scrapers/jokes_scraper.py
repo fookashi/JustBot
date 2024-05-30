@@ -32,7 +32,7 @@ class JokesScrapper(BaseScrapper):
     @cached(ttl=60 * 60 * 24, serializer=PickleSerializer())
     async def _scrape_category_b_jokes(self) -> list[str]:
         jokes = await self.tg_handler.get_data_from_tg_chanel(channel_id=1743905774, limit=100)
-        return [j.text async for j in jokes if j.__getattribute__("photo") is None]
+        return [j.text async for j in jokes if j.text.find("http") == -1]
 
     async def do_category_b_joke(self) -> str:
         data = await self._scrape_category_b_jokes()
@@ -58,7 +58,7 @@ class JokesScrapper(BaseScrapper):
         return CopypasteData(text=text, image=image)
 
     async def get_frog(self) -> FrogData:
-        dt = datetime.datetime.now(tz=UTC)
+        dt = datetime.now(tz=UTC)
         weekday_as_num = dt.weekday()
         frog_link = random.choice(frog.FROG_LINKS[weekday_as_num])  # noqa: S311
         image = await self._get_bytes_from_url(frog_link)
