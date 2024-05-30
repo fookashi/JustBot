@@ -4,10 +4,9 @@ from datetime import UTC, datetime
 import aiofiles.tempfile as aiotempfile
 from aiocache import cached
 from aiocache.serializers import PickleSerializer
-from telethon.tl.types import MessageMediaPhoto
-
 from models.frog import FrogData
 from models.tg import CopypasteData
+from telethon.tl.types import MessageMediaPhoto
 from utils import frog
 from utils.telegram_handler import TelegramClientHandler
 
