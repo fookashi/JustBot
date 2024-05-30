@@ -1,12 +1,13 @@
+import asyncio
 import logging
 import os
+from datetime import time
 
 from db.repos.guild_info import GuildInfoRepo
 from disnake import File, Message
-from disnake.ext import commands
+from disnake.ext import commands, tasks
 from just_bot import JustBot
 from models.images import ImageToDemotivator
-from pydantic import ValidationError
 from utils.demotivator_creator import DemotivatorCreator, DemotivatorCreatorError
 from utils.web_scrapers import JokesScrapper
 
@@ -18,6 +19,7 @@ class FunnyCogs(commands.Cog):
         self.jokes_scraper: JokesScrapper = JokesScrapper(bot.tg_handler)
         self.demo_creator: DemotivatorCreator = DemotivatorCreator()
         self.command_names: list[str] = [command.name for command in self.get_commands()]
+        self.notify_frog.start()
 
     @commands.command()
     async def stupid_joke(self, ctx: commands.Context) -> Message:
@@ -64,25 +66,30 @@ class FunnyCogs(commands.Cog):
             content_type=attachment.content_type,
             image=await attachment.read(),
         )
-        demotivator = await self.demo_creator.create_demotivator(image=image)
+        try:
+            demotivator = await self.demo_creator.create_demotivator(image=image)
+        except DemotivatorCreatorError:
+            logging.exception("Error while handling auto demotivator.")
 
         return await message.reply(file=File(demotivator.image, filename=demotivator.name))
 
-    @commands.command()
-    async def frog(self, ctx: commands.Context) -> Message:
+    @tasks.loop(hours=24)
+    async def notify_frog(self) -> None:
+        logging.info("entering loop")
         frog_data = await self.jokes_scraper.get_frog()
         data = {}
         data["content"] = frog_data.text
+
         if frog_data.image is not None:
             data["file"] = File(frog_data.image, filename="frog.jpg")
-        guild_info = await self.bot.get_guild_info(ctx.guild.id)
-
-        channel = self.bot.get_channel(guild_info.spam_channel_id)
-        if guild_info.spam_channel_id is not None:
-            channel = self.bot.get_channel(guild_info.spam_channel_id)
-            return await channel.send(**data)
-
-        return await ctx.send(**data)
+        async with asyncio.TaskGroup() as tg:
+            for guild in self.bot.guilds:
+                guild_info = await self.bot.get_guild_info(guild.id)
+                if guild_info.spam_channel_id is None:
+                    continue
+                logging.info("adding task")
+                channel = self.bot.get_channel(guild_info.spam_channel_id)
+                tg.create_task(channel.send(**data))
 
     @commands.command()
     async def set_sc(self, ctx: commands.Context) -> Message:

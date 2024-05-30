@@ -20,3 +20,6 @@ class JustBot(commands.Bot):
                 guild_info = await guild_repo.add_one({"guild_id": guild_id})
         self.guild_infos[guild_id] = guild_info
         return guild_info
+
+    async def get_all_guilds_info(self) -> list[GuildInfo]:
+        return list(self.guild_infos.values)

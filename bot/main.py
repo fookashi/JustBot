@@ -6,7 +6,6 @@ from cogs.music_player import MusicPlayer
 from db.repos.guild_info import GuildInfoRepo
 from just_bot import JustBot
 from settings import get_settings
-from utils.demotivator_creator import DemotivatorCreatorError
 
 settings = get_settings()
 
@@ -61,10 +60,7 @@ async def on_message(message: disnake.Message) -> None:
 перенесено на этот канал:\n*{msg_content}*",
             )
     if guild_info.auto_demo:
-        try:
-            await funny_cogs.auto_demo(message)
-        except DemotivatorCreatorError:
-            logging.exception("Error whle trying creating autodemotivator")
+        await funny_cogs.auto_demo(message)
     await bot.process_commands(message)
 
 
