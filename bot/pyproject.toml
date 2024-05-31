@@ -19,6 +19,7 @@ yt-dlp = "^2024.5.27"
 aiofiles = "^23.2.1"
 taskipy = "^1.12.2"
 fake-useragent = "^1.5.1"
+pytz = "^2024.1"
 
 
 [build-system]

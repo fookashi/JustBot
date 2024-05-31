@@ -1,15 +1,19 @@
 import asyncio
+import datetime
 import logging
 import os
-from datetime import time
 
-from db.repos.guild_info import GuildInfoRepo
+from db.repos.guild_info import GuildInfo, GuildInfoRepo
 from disnake import File, Message
 from disnake.ext import commands, tasks
 from just_bot import JustBot
 from models.images import ImageToDemotivator
 from utils.demotivator_creator import DemotivatorCreator, DemotivatorCreatorError
 from utils.web_scrapers import JokesScrapper
+
+times = [
+    datetime.time(hour=13, minute=2, tzinfo=datetime.timezone.utc),
+]
 
 
 class FunnyCogs(commands.Cog):
@@ -73,23 +77,21 @@ class FunnyCogs(commands.Cog):
 
         return await message.reply(file=File(demotivator.image, filename=demotivator.name))
 
-    @tasks.loop(hours=24)
+    @tasks.loop(seconds=5)
     async def notify_frog(self) -> None:
-        logging.info("entering loop")
+        guild_info: GuildInfo
         frog_data = await self.jokes_scraper.get_frog()
-        data = {}
-        data["content"] = frog_data.text
-
-        if frog_data.image is not None:
-            data["file"] = File(frog_data.image, filename="frog.jpg")
+        content = frog_data.text
+        async with GuildInfoRepo() as guild_repo:
+            fields = {"guild_id": [guild.id for guild in self.bot.guilds]}
+            guild_infos = await guild_repo.get_many(fields=fields)
         async with asyncio.TaskGroup() as tg:
-            for guild in self.bot.guilds:
-                guild_info = await self.bot.get_guild_info(guild.id)
+            async for guild_info in guild_infos:
                 if guild_info.spam_channel_id is None:
                     continue
-                logging.info("adding task")
                 channel = self.bot.get_channel(guild_info.spam_channel_id)
-                tg.create_task(channel.send(**data))
+                tg.create_task(channel.send(content=content, file=File(frog_data.image, filename="frog.jpg")))
+        logging.info("ended loop!!!!!!")
 
     @commands.command()
     async def set_sc(self, ctx: commands.Context) -> Message:

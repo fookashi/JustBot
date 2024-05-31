@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime
 
 import disnake
 from cogs.jokes import FunnyCogs

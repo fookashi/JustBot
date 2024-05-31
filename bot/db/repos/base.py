@@ -1,5 +1,6 @@
+import logging
 from types import TracebackType
-from typing import Any, Self
+from typing import Any, AsyncGenerator, Self
 
 from db.config import client
 from models.base import BaseModel
@@ -42,10 +43,19 @@ class BaseRepo:
     ) -> None:
         await self.session.end_session()
 
-    async def get_one(self, value: Any, key: str) -> BaseModel:  # noqa: ANN401
+    async def get_one(self, value: Any, key: str) -> BaseModel | None:  # noqa: ANN401
         key = key or "_id"
         doc = await self.collection.find_one({key: value}, session=self.session)
         return self.model(**doc) if doc else None
+
+    async def get_many(self, fields: dict) -> AsyncGenerator[BaseModel, None]:
+        logging.info(fields)
+        for key, value in fields.items():
+            if isinstance(value, (list, tuple, set, frozenset)):
+                fields[key] = {"$in": list(value)}
+
+        docs = self.collection.find(fields)
+        return (self.model(**doc) async for doc in docs)
 
     async def update_one(self, value: Any, key: str, updated_values: dict) -> type[BaseModel] | None:  # noqa: ANN401
         key = key or "_id"

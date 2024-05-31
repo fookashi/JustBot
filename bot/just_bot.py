@@ -1,10 +1,13 @@
 from db.repos.guild_info import GuildInfoRepo
 from db.repos.guild_info.model import GuildInfo
 from disnake.ext import commands
+from pytz import timezone
 from utils.telegram_handler import TelegramClientHandler
 
 
 class JustBot(commands.Bot):
+    tz = timezone("Europe/Moscow")
+
     def __init__(self, *args: int, **kwargs: int) -> None:
         self.tg_handler = TelegramClientHandler()
         self.guild_infos = {}
@@ -21,5 +24,5 @@ class JustBot(commands.Bot):
         self.guild_infos[guild_id] = guild_info
         return guild_info
 
-    async def get_all_guilds_info(self) -> list[GuildInfo]:
+    async def get_all_active_guilds_info(self) -> list[GuildInfo]:
         return list(self.guild_infos.values)

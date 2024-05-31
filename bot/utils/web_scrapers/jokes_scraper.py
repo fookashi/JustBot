@@ -6,6 +6,7 @@ from aiocache import cached
 from aiocache.serializers import PickleSerializer
 from models.frog import FrogData
 from models.tg import CopypasteData
+from pytz import timezone
 from telethon.tl.types import MessageMediaPhoto
 from utils import frog
 from utils.telegram_handler import TelegramClientHandler
@@ -58,7 +59,7 @@ class JokesScrapper(BaseScrapper):
         return CopypasteData(text=text, image=image)
 
     async def get_frog(self) -> FrogData:
-        dt = datetime.now(tz=UTC)
+        dt = datetime.now(tz=timezone("Europe/Moscow"))
         weekday_as_num = dt.weekday()
         frog_link = random.choice(frog.FROG_LINKS[weekday_as_num])  # noqa: S311
         image = await self._get_bytes_from_url(frog_link)

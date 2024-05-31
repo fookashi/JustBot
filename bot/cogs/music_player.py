@@ -1,4 +1,3 @@
-import asyncio
 from collections import defaultdict
 
 import disnake
@@ -24,6 +23,7 @@ YDL_OPTIONS = {
 class MusicPlayer(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot: commands.Bot = bot
+        self.loop = self.bot.loop
         self.music_infos: dict[int, GuildMusicInfo] = defaultdict(GuildMusicInfo)
         self.ytdl: yt_dlp.YoutubeDL = yt_dlp.YoutubeDL(YDL_OPTIONS)
         self.command_names: list[str] = [command.name for command in self.get_commands()]
@@ -44,11 +44,11 @@ class MusicPlayer(commands.Cog):
 
     async def play_next(self, guild_id: int) -> None:
         music_info = self.music_infos[guild_id]
-        if len(music_info.playlist) >= 1:
+        if len(music_info.playlist):
             url = music_info.playlist.pop(0)
             music_info.voice.play(
                 disnake.FFmpegPCMAudio(url, **FFMPEG_OPTIONS),
-                after=lambda _=None: asyncio.run(self.play_next(guild_id)),
+                after=lambda _: self.loop.create_task(self.play_next(guild_id)),
             )
         else:
             music_info.is_playing = False
@@ -59,8 +59,7 @@ class MusicPlayer(commands.Cog):
         music_info = self.music_infos[ctx.guild.id]
         if music_info.voice is None and not await self.join_voice_channel(ctx):
             return None
-        loop = asyncio.get_event_loop()
-        data = await loop.run_in_executor(None, lambda: self.ytdl.extract_info(url, download=False))
+        data = self.ytdl.extract_info(url, download=False)
         song = data["url"]
         music_info.playlist.append(song)
         if not music_info.is_playing:
