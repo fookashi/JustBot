@@ -12,7 +12,7 @@ from utils.demotivator_creator import DemotivatorCreator, DemotivatorCreatorErro
 from utils.web_scrapers import JokesScrapper
 
 times = [
-    datetime.time(hour=13, minute=2, tzinfo=datetime.timezone.utc),
+    datetime.time(hour=9, tzinfo=datetime.timezone.utc),
 ]
 
 
@@ -77,7 +77,7 @@ class FunnyCogs(commands.Cog):
 
         return await message.reply(file=File(demotivator.image, filename=demotivator.name))
 
-    @tasks.loop(seconds=5)
+    @tasks.loop(time=times)
     async def notify_frog(self) -> None:
         guild_info: GuildInfo
         frog_data = await self.jokes_scraper.get_frog()

@@ -1,5 +1,5 @@
 import random
-from datetime import UTC, datetime
+from datetime import datetime
 
 import aiofiles.tempfile as aiotempfile
 from aiocache import cached
