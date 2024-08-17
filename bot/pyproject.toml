@@ -28,4 +28,5 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.taskipy.tasks]
 start = { cmd = "python -m main", help = "run the bot" }
+init_tg = { cmd = "python -m utils.telegram_handler", help = "init tg handler"}
 ruff = { cmd = "ruff check .", help = "run ruff formatter" }

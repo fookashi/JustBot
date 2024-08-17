@@ -32,3 +32,6 @@ class TelegramClientHandler(metaclass=Singleton):
         if len(data) != 1:
             return None
         return data[0]
+
+if __name__ == "__main__":
+    TelegramClientHandler()

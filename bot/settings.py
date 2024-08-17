@@ -1,7 +1,7 @@
 from functools import lru_cache
 
 from pydantic_settings import BaseSettings
-
+from pydantic import Field
 
 class Settings(BaseSettings):
     BOT_TOKEN: str
@@ -10,8 +10,8 @@ class Settings(BaseSettings):
     MONGO_HOST: str
     MONGO_DB: str
     MONGO_PORT: int
-    MONGO_USER: str
-    MONGO_PASSWORD: str
+    MONGO_USER: str = Field(default="")
+    MONGO_PASSWORD: str = Field(default="")
 
     class Config:
         env_file = ".env"
