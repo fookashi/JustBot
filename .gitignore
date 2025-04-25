@@ -8,6 +8,7 @@ __pycache__/
 *.python-version
 **/*.ruff_cache
 **/poetry.lock
+.venv
 
 # Disable mongodb internal data
 data

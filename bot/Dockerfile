@@ -1,19 +1,22 @@
-FROM python:3.11.5-slim-bookworm
+FROM python:3.13-slim-bookworm
 
-WORKDIR /bot
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    ca-certificates \
+    ffmpeg \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
-RUN apt-get update && \
-    apt-get install --no-install-recommends -y ffmpeg && \
-    apt-get clean && rm -rf /var/lib/apt/lists/*
+ADD https://astral.sh/uv/install.sh /uv-installer.sh
+RUN sh /uv-installer.sh && rm /uv-installer.sh
 
+ENV PATH="/root/.local/bin/:$PATH"
 
-RUN pip install --no-cache-dir -U poetry
+WORKDIR /app
 
+COPY pyproject.toml /app/pyproject.toml
+COPY uv.lock /app/uv.lock
 
-COPY ./poetry.lock* ./pyproject.toml ./
+RUN uv sync --frozen
 
-RUN poetry config virtualenvs.create false \
-    && poetry install --no-interaction --no-ansi
-
-COPY . /bot
-CMD ["poetry", "run", "task", "start"]
+COPY . /app

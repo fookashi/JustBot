@@ -12,7 +12,7 @@ class TelegramClientHandler(metaclass=Singleton):
         api_id = settings.TG_API_ID
         tg_api_hash = settings.TG_API_HASH
         self.client = telethon.TelegramClient("justbot", api_id, tg_api_hash)
-        self.client.start()
+        #self.client.start()
 
     async def get_data_from_tg_chanel(self, channel_id: int, limit: int = 100) -> Iterator[telethon.types.Message]:
         entity = PeerChannel(channel_id)

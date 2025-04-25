@@ -26,8 +26,12 @@ services:
     build:
       context: ./bot
       dockerfile: Dockerfile
+    depends_on:
+      mongodb:
+        condition: service_healthy
     env_file:
       - .env
+    command: uv run main.py
 
 volumes:
   logs:
